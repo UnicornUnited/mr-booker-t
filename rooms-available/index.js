@@ -40,10 +40,23 @@ exports.handler = function (event, context, callback) {
 
 const handlers = {
     'LaunchRequest': function () {
-        var welcomeMessage = 'Hello! When do you need a study room?';
-        this.emit(':ask', welcomeMessage, 'Try again.');
+        var outputMessage = 'Hello! Welcome to Mister Booker T. I can help you book a room by asking, What\'s the next available room?';
+        var repromptMessage = 'Simply ask me, What\'s the next available room?';
+        this.emit(':ask', outputMessage, repromptMessage);
     },
-
+    
+    'AMAZON.HelpIntent': function () {
+        var outputMessage = 'Simply ask me, What\'s the next available room?';
+        this.emit(':ask', outputMessage);
+    },
+    'AMAZON.StopIntent': function () {
+        var outputMessage = 'Goodbye.';
+        this.emit(':tell', outputMessage );
+    },
+    'AMAZON.CancelIntent': function () {
+        var outputMessage = 'Goodbye.';
+        this.emit(':tell', outputMessage );
+    },
     'GetAvailableRooms': function() {
         //var time = this.event.request.intent.slots.listDate.value;
         var that = this;
@@ -86,29 +99,54 @@ const handlers = {
                     var stime_from = dateFormatter(time);
                     time = new Date(parseInt(row.time_to) * 1000);//convert it to millisecond
                     var stime_to = dateFormatter(time);
-                    response = `There is a room ${room_name} available on ${campus} campus in ${building_name} for a group of ${room_size} people,`;
-                    response += ` It's available from ${stime_from} to ${stime_to}`;
-                    response += ' Would you like to book this room?';
-
+                    //We can wrap response in SSML to ensure everything is pronounced as expected
+                    response = 'Ok, let me check what\'s the next available study room <break time="2s"/>. There is a room available in the' + campus +
+                    ' campus in <say-as interpret-as="spell-out">' + building_name + '</say-as> for a group of <say-as interpret-as="cardinal">' + room_size + 
+                    '</say-as> people. The room is available from <say-as interpret-as="time">' + stime_from + '</say-as> to <say-as interpret-as="time">' + stime_to + 
+                    '</say-as>. Would you like to book the study room?';
                     that.emit(':ask', response);
                 }
                 // context.succeed(data.Payload);
             }
         });
     },
-
+    'YesIntent' : function(){
+        //If yes, we can trigger an intent here to create the URL that will save data to the database.
+        //this.emitWithState("TargetIntent")
+        this.emit(':ask', 'Ok I can get that set up for you. Please give me your student number', 'I don\'t think I got that. Please give me your student number');
+    },
+    'PrepareBookingIntent' : function(){
+        //The followng if statement below confirms that the user enters the correct student number
+        //and handles the verification using skill builder utterances
+        if (this.event.request.dialogState == "STARTED" || this.event.request.dialogState == "IN_PROGRESS"){
+            this.context.succeed({
+                "response": {
+                    "directives": [
+                        {
+                            "type": "Dialog.Delegate"
+                        }
+                    ],
+                    "shouldEndSession": false
+                },
+                "sessionAttributes": {}
+            });
+        } else {
+            this.emitWithState('ConfirmedBookingIntent');
+        }
+    },
+    'ConfirmedBookingIntent': function(){
+        //Intent creates the URL that will update the DB to confirm the booking
+        //and sends the URL to the user via email. Yes, this can be a LAMBDA function of its own
+        var response = 'Perfect, let me reserve the study room <break time="2s"/> Ok, your booking is all set up. I just sent you an' +
+        ' email with a booking <say-as interpret-as="spell-out">URL</say-as>. Make sure to click on it to finalize your reservation. Goodbye';
+        this.emit(':tell', response);
+    },
+    'NoIntent' : function(){
+        this.emit(':tell', 'No worries, I may be able to help you next time. Goodbye');
+        this.emit('AMAZON.StopIntent');
+    },
     'Unhandled': function() {
-        this.emit(':ask', 'Sorry, I didn\'t get that. Try saying available room for a date.', 'Try saying available room for a date.');
-    },
-
-    'AMAZON.HelpIntent': function () {
-        this.emit(':ask', 'Tell me which date you are looking for study rooms. For example, any study room available today?', 'try again');
-    },
-
-    'AMAZON.StopIntent': function () {
-        var say = 'Goodbye.';
-
-        this.emit(':tell', say );
+        var outputMessage = 'Sorry, I didn\'t get that. Try asking again';
+        this.emit(':ask', outputMessage);
     }
-
 }
