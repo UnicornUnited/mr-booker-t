@@ -1,0 +1,19 @@
+﻿AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: An AWS Serverless Specification template describing your function.
+Resources:
+  AlexaProjectservcieroomsconfirm:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: index.handler
+      Runtime: nodejs6.10
+      CodeUri: .
+      Description: ''
+      MemorySize: 128
+      Timeout: 3
+      Role: 'arn:aws:iam::993884755824:role/AlexaProject-Lambda-DynamoDB-Full'
+      Environment:
+        Variables:
+          RESERVATION_HANDLER_ENPOINT: >-
+            https://s2x1ushasf.execute-api.us-west-2.amazonaws.com/dev/service/rooms/confirm
+          LAMBDA_REGION: us-west-2
