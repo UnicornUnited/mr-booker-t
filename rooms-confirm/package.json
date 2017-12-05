@@ -1,0 +1,7 @@
+{
+    "dependencies": {
+        "aws-sdk": "^2.7.12",
+        "alexa-sdk": "^1.0.6",
+        "uuid": "^3.1.0"
+    }
+}
