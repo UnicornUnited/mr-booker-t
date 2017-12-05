@@ -164,6 +164,7 @@ exports.handler = (event, context, callback) => {
     if (event && event.httpMethod) {
         request_method = 'POST';
     }
+    //The POST and GET conventions here are only this project-specific
     //if it is a post request, look for parameters from event.body
     if (request_method == 'POST' && event.body) {
         event_body = JSON.parse(event.body);
